@@ -1,85 +1,181 @@
-"""Query registry placeholders for APS ETL."""
+"""Query registry and canonical query compilation."""
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import jsonschema
+import yaml  # type: ignore[import-untyped]
 
 
 @dataclass(frozen=True)
-class QuerySpec:
-    """Definition of a query registered for APS ETL."""
+class Libraries:
+    """Library inclusion configuration."""
 
-    name: str
-    sql: str
-    parameters: tuple[str, ...] = ()
-
-    def to_dict(self) -> dict[str, object]:
-        """Serialize the query specification for persistence."""
-
-        return {
-            "name": self.name,
-            "sql": self.sql,
-            "parameters": list(self.parameters),
-        }
+    legacy: bool
+    main: bool
 
 
 @dataclass(frozen=True)
-class DateRangeFilter:
-    """Canonical date range filter definition."""
+class SortSpec:
+    """Sorting configuration."""
 
     field: str
-    ge: str
-    le: str
+    direction: str
 
-    def to_aps_filter(self) -> dict[str, str]:
-        """Serialize to APS filter object for date ranges."""
+
+@dataclass(frozen=True)
+class Filter:
+    """Canonical filter."""
+
+    field: str
+    operator: str | None
+    value: str | list[str]
+
+
+@dataclass(frozen=True)
+class QueryDefinition:
+    """Canonical query definition."""
+
+    query_id: str
+    name: str
+    q: str
+    filters_and: tuple[Filter, ...]
+    filters_or: tuple[Filter, ...]
+    libraries: Libraries
+    sort: SortSpec
+    content: bool
+    safety_buffer_days: int
+    wire_format: str | None
+    enabled: bool
+
+    def to_definition_payload(self) -> dict[str, Any]:
+        """Serialize the definition for persistence."""
 
         return {
-            "field": self.field,
-            "value": f"({self.field} ge '{self.ge}' and {self.field} le '{self.le}')",
+            "query_id": self.query_id,
+            "name": self.name,
+            "q": self.q,
+            "filters_and": [filter_to_payload(filter_) for filter_ in self.filters_and],
+            "filters_or": [filter_to_payload(filter_) for filter_ in self.filters_or],
+            "libraries": {"legacy": self.libraries.legacy, "main": self.libraries.main},
+            "sort": {"field": self.sort.field, "dir": self.sort.direction},
+            "content": self.content,
+            "safety_buffer_days": self.safety_buffer_days,
+            "wire_format": self.wire_format,
+            "enabled": self.enabled,
         }
 
 
-def compile_date_range_filter(field: str, ge: str, le: str) -> dict[str, str]:
-    """Compile a date range filter into the APS filter wire format."""
+def filter_to_payload(filter_: Filter) -> dict[str, Any]:
+    """Serialize a filter for persistence."""
 
-    return DateRangeFilter(field=field, ge=ge, le=le).to_aps_filter()
+    payload: dict[str, Any] = {"field": filter_.field, "value": filter_.value}
+    if filter_.operator is not None:
+        payload["operator"] = filter_.operator
+    return payload
 
 
-class QueryRegistry:
-    """Registry holding all APS queries."""
+def compile_date_range_filter(field: str, ge: str, le: str) -> Filter:
+    """Compile a date range filter into the APS canonical filter."""
 
-    def __init__(self, queries: Iterable[QuerySpec] | None = None) -> None:
-        self._queries: list[QuerySpec] = list(queries or [])
+    value = f"({field} ge '{ge}' and {field} le '{le}')"
+    return Filter(field=field, operator=None, value=value)
 
-    @property
-    def queries(self) -> tuple[QuerySpec, ...]:
-        """Return the registered queries."""
 
-        return tuple(self._queries)
+def load_registry_schema(schema_path: Path) -> dict[str, Any]:
+    """Load registry JSON schema."""
 
-    def register(self, query: QuerySpec) -> None:
-        """Register a new query."""
+    return yaml.safe_load(schema_path.read_text(encoding="utf-8"))
 
-        self._queries.append(query)
 
-    def validate(self) -> list[str]:
-        """Validate registered queries and return a list of issues."""
+def load_registry_payload(registry_path: Path, schema_path: Path) -> dict[str, Any]:
+    """Load and validate registry payload."""
 
-        issues: list[str] = []
-        seen: set[str] = set()
-        for query in self._queries:
-            if not query.name:
-                issues.append("Query name is required.")
-            if query.name in seen:
-                issues.append(f"Duplicate query name: {query.name}.")
-            seen.add(query.name)
-            if not query.sql:
-                issues.append(f"Query '{query.name}' is missing SQL.")
-        return issues
+    payload = yaml.safe_load(registry_path.read_text(encoding="utf-8")) or {}
+    schema = load_registry_schema(schema_path)
+    jsonschema.validate(instance=payload, schema=schema)
+    return payload
 
-    def to_dict(self) -> dict[str, list[dict[str, object]]]:
-        """Serialize all query specs."""
 
-        return {"queries": [query.to_dict() for query in self._queries]}
+def load_registry(
+    registry_path: Path, schema_path: Path, *, allow_disabled: bool = True
+) -> list[QueryDefinition]:
+    """Load registry YAML and return canonical query definitions."""
+
+    payload = load_registry_payload(registry_path, schema_path)
+
+    defaults = payload.get("defaults", {})
+    default_libraries = defaults.get("libraries", {})
+    default_sort = defaults.get("sort", {})
+    default_content = defaults.get("content", False)
+    default_safety_buffer = defaults.get("safety_buffer_days", 3)
+    default_wire_format = defaults.get("wire_format")
+
+    queries: list[QueryDefinition] = []
+    for query in payload.get("queries", []):
+        libraries = query.get("libraries", default_libraries)
+        sort = query.get("sort", default_sort)
+        enabled = query.get("enabled", True)
+        if not allow_disabled and not enabled:
+            continue
+        query_id = query.get("query_id") or query["name"]
+        filters_and = compile_filters(query.get("filters_and", []))
+        filters_or = compile_filters(query.get("filters_or", []))
+        queries.append(
+            QueryDefinition(
+                query_id=query_id,
+                name=query["name"],
+                q=query.get("q", ""),
+                filters_and=tuple(filters_and),
+                filters_or=tuple(filters_or),
+                libraries=Libraries(
+                    legacy=bool(libraries.get("legacy", True)),
+                    main=bool(libraries.get("main", True)),
+                ),
+                sort=SortSpec(
+                    field=sort.get("field", "DateAddedTimestamp"),
+                    direction=sort.get("dir", "DESC"),
+                ),
+                content=bool(query.get("content", default_content)),
+                safety_buffer_days=int(query.get("safety_buffer_days", default_safety_buffer)),
+                wire_format=query.get("wire_format", default_wire_format),
+                enabled=enabled,
+            )
+        )
+    return queries
+
+
+def registry_version(registry_path: Path, schema_path: Path) -> str:
+    """Return the registry schema version."""
+
+    payload = load_registry_payload(registry_path, schema_path)
+    return str(payload.get("version", "1"))
+
+
+def compile_filters(filters: list[dict[str, Any]]) -> list[Filter]:
+    """Compile registry filters into canonical filters."""
+
+    compiled: list[Filter] = []
+    for filter_item in filters:
+        filter_type = filter_item.get("type", "text")
+        field = filter_item["field"]
+        if filter_type == "date_range":
+            compiled.append(
+                compile_date_range_filter(
+                    field=field,
+                    ge=filter_item["ge"],
+                    le=filter_item["le"],
+                )
+            )
+        else:
+            compiled.append(
+                Filter(
+                    field=field,
+                    operator=filter_item["operator"],
+                    value=filter_item["value"],
+                )
+            )
+    return compiled
