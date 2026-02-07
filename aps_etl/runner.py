@@ -140,9 +140,12 @@ def run_query(
     except Exception as exc:  # pragma: no cover - defensive status setting
         query_run.status = QueryRunStatus.FAILED
         query_run.error_message = str(exc)
+        query_run.ended_at = datetime.utcnow()
+        session.commit()
         raise
     finally:
-        query_run.ended_at = datetime.utcnow()
+        if query_run.ended_at is None:
+            query_run.ended_at = datetime.utcnow()
 
 
 def build_discoveries(
@@ -161,7 +164,7 @@ def build_discoveries(
         if not accession:
             continue
         is_package = str(document.get("IsPackage", "No")).lower() in {"yes", "true", "1"}
-        upsert_document(
+        canonical_accession = upsert_document(
             session,
             accession,
             {
@@ -180,7 +183,7 @@ def build_discoveries(
         discoveries.append(
             APSDiscovery(
                 run_id=run_id,
-                accession_number=accession,
+                accession_number=canonical_accession,
                 skip_value=skip_value,
                 page_number=page_number,
                 search_score=result.get("score"),

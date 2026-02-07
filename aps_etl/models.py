@@ -33,6 +33,10 @@ class QueryRunStatus(enum.StrEnum):
     FAILED = "failed"
 
 
+JsonValue = dict[str, Any] | list[Any]
+JsonValueOrNone = JsonValue | None
+
+
 class APSQuery(Base):
     """Registered APS query definitions."""
 
@@ -40,7 +44,7 @@ class APSQuery(Base):
 
     query_id: Mapped[str] = mapped_column(Text, primary_key=True)
     name: Mapped[str] = mapped_column(Text, nullable=False)
-    definition_json: Mapped[dict[str, Any] | list[Any]] = mapped_column(JSON, nullable=False)
+    definition_json: Mapped[JsonValue] = mapped_column(JSON, nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -102,10 +106,10 @@ class APSDocument(Base):
     is_stub: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     document_date: Mapped[date | None] = mapped_column(Date)
     date_added_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    document_type: Mapped[dict[str, Any] | list[Any] | None] = mapped_column(JSON)
-    docket_number: Mapped[dict[str, Any] | list[Any] | None] = mapped_column(JSON)
+    document_type: Mapped[JsonValueOrNone] = mapped_column(JSON)
+    docket_number: Mapped[JsonValueOrNone] = mapped_column(JSON)
     title: Mapped[str | None] = mapped_column(Text)
-    raw_metadata_json: Mapped[dict[str, Any] | list[Any] | None] = mapped_column(JSON)
+    raw_metadata_json: Mapped[JsonValueOrNone] = mapped_column(JSON)
     first_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -131,8 +135,8 @@ class APSDiscovery(Base):
     skip_value: Mapped[int] = mapped_column(Integer, nullable=False)
     page_number: Mapped[int] = mapped_column(Integer, nullable=False)
     search_score: Mapped[float | None] = mapped_column(Float)
-    highlights_json: Mapped[dict[str, Any] | list[Any] | None] = mapped_column(JSON)
-    semantic_search_json: Mapped[dict[str, Any] | list[Any] | None] = mapped_column(JSON)
+    highlights_json: Mapped[JsonValueOrNone] = mapped_column(JSON)
+    semantic_search_json: Mapped[JsonValueOrNone] = mapped_column(JSON)
     discovered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
