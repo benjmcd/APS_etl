@@ -1,0 +1,21 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+markers = [
+  "integration: APS API cassette-driven integration tests",
+  "smoke_offline: offline smoke tests using cassettes and local DB",
+  "smoke_live: live smoke tests requiring APS keys",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+strict = true
+allow_subclassing_any = true
+disable_error_code = ["no-any-return"]
