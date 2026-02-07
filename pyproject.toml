@@ -19,3 +19,6 @@ ignore_missing_imports = true
 strict = true
 allow_subclassing_any = true
 disable_error_code = ["no-any-return"]
+
+[project]
+requires-python = ">=3.12,<3.13"
