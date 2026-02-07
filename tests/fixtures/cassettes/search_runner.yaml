@@ -1,0 +1,122 @@
+interactions:
+  - request:
+      body: '{"q":"NuScale","filters":[{"field":"DateAddedTimestamp","value":"(DateAddedTimestamp ge ''2024-01-18'' and DateAddedTimestamp le ''2024-01-23'')"},{"field":"DocumentType","value":"Inspection Report","operator":"contains"}],"anyFilters":[],"legacyLibFilter":true,"mainLibFilter":true,"sort":"DateAddedTimestamp","sortDirection":1,"skip":0,"content":false}'
+      headers:
+        Accept:
+          - application/json
+        Content-Type:
+          - application/json
+        Ocp-Apim-Subscription-Key:
+          - REDACTED
+      method: POST
+      uri: https://adams-api.nrc.gov/aps/api/search
+    response:
+      body:
+        string: '{"count":2,"results":[{"score":19.989679,"highlights":{"Title":["<em>NuScale</em> Power, LLC"]},"semanticSearch":{"queryType":"lexical"},"document":{"AccessionNumber":"ML24018A111","DocumentTitle":"NuScale Document 1","DocumentDate":"2024-01-18","DateAddedTimestamp":"2024-01-23 08:34","Url":"https://example.com/doc1","IsPackage":"No","DocumentsFiledInPackage":[],"PackagesFiledIn":[]}},{"score":18.0,"highlights":{"Title":["Inspection Report"]},"semanticSearch":{"queryType":"lexical"},"document":{"AccessionNumber":"ML24018A112","DocumentTitle":"NuScale Document 2","DocumentDate":"2024-01-19","DateAddedTimestamp":"2024-01-23 09:00","Url":"https://example.com/doc2","IsPackage":"No","DocumentsFiledInPackage":[],"PackagesFiledIn":[]}}],"pageNumber":1}'
+      headers:
+        Content-Type:
+          - application/json
+      status:
+        code: 200
+        message: OK
+  - request:
+      body: '{"q":"NuScale","filters":[{"field":"DateAddedTimestamp","value":"(DateAddedTimestamp ge ''2024-01-18'' and DateAddedTimestamp le ''2024-01-23'')"},{"field":"DocumentType","value":"Inspection Report","operator":"contains"}],"anyFilters":[],"legacyLibFilter":true,"mainLibFilter":true,"sort":"DateAddedTimestamp","sortDirection":1,"skip":0,"content":false}'
+      headers:
+        Accept:
+          - application/json
+        Content-Type:
+          - application/json
+        Ocp-Apim-Subscription-Key:
+          - REDACTED
+      method: POST
+      uri: https://adams-api.nrc.gov/aps/api/search
+    response:
+      body:
+        string: '{"count":2,"results":[{"score":19.989679,"highlights":{"Title":["<em>NuScale</em> Power, LLC"]},"semanticSearch":{"queryType":"lexical"},"document":{"AccessionNumber":"ML24018A111","DocumentTitle":"NuScale Document 1","DocumentDate":"2024-01-18","DateAddedTimestamp":"2024-01-23 08:34","Url":"https://example.com/doc1","IsPackage":"No","DocumentsFiledInPackage":[],"PackagesFiledIn":[]}},{"score":18.0,"highlights":{"Title":["Inspection Report"]},"semanticSearch":{"queryType":"lexical"},"document":{"AccessionNumber":"ML24018A112","DocumentTitle":"NuScale Document 2","DocumentDate":"2024-01-19","DateAddedTimestamp":"2024-01-23 09:00","Url":"https://example.com/doc2","IsPackage":"No","DocumentsFiledInPackage":[],"PackagesFiledIn":[]}}],"pageNumber":1}'
+      headers:
+        Content-Type:
+          - application/json
+      status:
+        code: 200
+        message: OK
+  - request:
+      body: '{"q":"NuScale","filters":[{"field":"DateAddedTimestamp","value":"(DateAddedTimestamp ge ''2024-01-18'' and DateAddedTimestamp le ''2024-01-23'')"},{"field":"DocumentType","value":"Inspection Report","operator":"contains"}],"anyFilters":[],"legacyLibFilter":true,"mainLibFilter":true,"sort":"DateAddedTimestamp","sortDirection":1,"skip":2,"content":false}'
+      headers:
+        Accept:
+          - application/json
+        Content-Type:
+          - application/json
+        Ocp-Apim-Subscription-Key:
+          - REDACTED
+      method: POST
+      uri: https://adams-api.nrc.gov/aps/api/search
+    response:
+      body:
+        string: '{"count":0,"results":[],"pageNumber":2}'
+      headers:
+        Content-Type:
+          - application/json
+      status:
+        code: 200
+        message: OK
+  - request:
+      body: '{"q":"NuScale","filters":[{"field":"DateAddedTimestamp","value":"(DateAddedTimestamp ge ''2024-01-18'' and DateAddedTimestamp le ''2024-01-23'')"},{"field":"DocumentType","value":"Inspection Report","operator":"contains"}],"anyFilters":[],"legacyLibFilter":true,"mainLibFilter":true,"sort":"DateAddedTimestamp","sortDirection":1,"skip":0,"content":false}'
+      headers:
+        Accept:
+          - application/json
+        Content-Type:
+          - application/json
+        Ocp-Apim-Subscription-Key:
+          - REDACTED
+      method: POST
+      uri: https://adams-api.nrc.gov/aps/api/search
+    response:
+      body:
+        string: '{"count":2,"results":[{"score":19.989679,"highlights":{"Title":["<em>NuScale</em> Power, LLC"]},"semanticSearch":{"queryType":"lexical"},"document":{"AccessionNumber":"ML24018A111","DocumentTitle":"NuScale Document 1","DocumentDate":"2024-01-18","DateAddedTimestamp":"2024-01-23 08:34","Url":"https://example.com/doc1","IsPackage":"No","DocumentsFiledInPackage":[],"PackagesFiledIn":[]}},{"score":18.0,"highlights":{"Title":["Inspection Report"]},"semanticSearch":{"queryType":"lexical"},"document":{"AccessionNumber":"ML24018A112","DocumentTitle":"NuScale Document 2","DocumentDate":"2024-01-19","DateAddedTimestamp":"2024-01-23 09:00","Url":"https://example.com/doc2","IsPackage":"No","DocumentsFiledInPackage":[],"PackagesFiledIn":[]}}],"pageNumber":1}'
+      headers:
+        Content-Type:
+          - application/json
+      status:
+        code: 200
+        message: OK
+  - request:
+      body: '{"q":"NuScale","filters":[{"field":"DateAddedTimestamp","value":"(DateAddedTimestamp ge ''2024-01-18'' and DateAddedTimestamp le ''2024-01-23'')"},{"field":"DocumentType","value":"Inspection Report","operator":"contains"}],"anyFilters":[],"legacyLibFilter":true,"mainLibFilter":true,"sort":"DateAddedTimestamp","sortDirection":1,"skip":0,"content":false}'
+      headers:
+        Accept:
+          - application/json
+        Content-Type:
+          - application/json
+        Ocp-Apim-Subscription-Key:
+          - REDACTED
+      method: POST
+      uri: https://adams-api.nrc.gov/aps/api/search
+    response:
+      body:
+        string: '{"count":2,"results":[{"score":19.989679,"highlights":{"Title":["<em>NuScale</em> Power, LLC"]},"semanticSearch":{"queryType":"lexical"},"document":{"AccessionNumber":"ML24018A111","DocumentTitle":"NuScale Document 1","DocumentDate":"2024-01-18","DateAddedTimestamp":"2024-01-23 08:34","Url":"https://example.com/doc1","IsPackage":"No","DocumentsFiledInPackage":[],"PackagesFiledIn":[]}},{"score":18.0,"highlights":{"Title":["Inspection Report"]},"semanticSearch":{"queryType":"lexical"},"document":{"AccessionNumber":"ML24018A112","DocumentTitle":"NuScale Document 2","DocumentDate":"2024-01-19","DateAddedTimestamp":"2024-01-23 09:00","Url":"https://example.com/doc2","IsPackage":"No","DocumentsFiledInPackage":[],"PackagesFiledIn":[]}}],"pageNumber":1}'
+      headers:
+        Content-Type:
+          - application/json
+      status:
+        code: 200
+        message: OK
+  - request:
+      body: '{"q":"NuScale","filters":[{"field":"DateAddedTimestamp","value":"(DateAddedTimestamp ge ''2024-01-18'' and DateAddedTimestamp le ''2024-01-23'')"},{"field":"DocumentType","value":"Inspection Report","operator":"contains"}],"anyFilters":[],"legacyLibFilter":true,"mainLibFilter":true,"sort":"DateAddedTimestamp","sortDirection":1,"skip":2,"content":false}'
+      headers:
+        Accept:
+          - application/json
+        Content-Type:
+          - application/json
+        Ocp-Apim-Subscription-Key:
+          - REDACTED
+      method: POST
+      uri: https://adams-api.nrc.gov/aps/api/search
+    response:
+      body:
+        string: '{"count":0,"results":[],"pageNumber":2}'
+      headers:
+        Content-Type:
+          - application/json
+      status:
+        code: 200
+        message: OK
+version: 1

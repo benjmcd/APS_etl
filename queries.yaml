@@ -1,0 +1,30 @@
+version: 1
+
+defaults:
+  libraries:
+    legacy: true
+    main: true
+  sort:
+    field: DateAddedTimestamp
+    dir: DESC
+  content: false
+  safety_buffer_days: 3
+  wire_format: null
+
+queries:
+  - name: "test_query"
+    q: "NuScale"
+    filters_and:
+      - type: date_range
+        field: DateAddedTimestamp
+        ge: "2024-01-18"
+        le: "2024-01-23"
+      - type: text
+        field: DocumentType
+        operator: contains
+        value: "Inspection Report"
+    filters_or: []
+    libraries:
+      legacy: true
+      main: true
+    enabled: true

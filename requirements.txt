@@ -8,6 +8,8 @@ alembic==1.18.3
 psycopg[binary]==3.3.2
 python-dotenv==1.0.1
 orjson==3.10.18
+pyyaml==6.0.2
+jsonschema==4.23.0
 pytest==9.0.2
 pytest-cov==6.3.0
 vcrpy==8.0.0

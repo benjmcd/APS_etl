@@ -8,7 +8,8 @@ def test_compile_date_range_filter() -> None:
         le="2025-01-31",
     )
 
-    assert compiled == {
-        "field": "DateAddedTimestamp",
-        "value": "(DateAddedTimestamp ge '2025-01-01' and DateAddedTimestamp le '2025-01-31')",
-    }
+    assert compiled.field == "DateAddedTimestamp"
+    assert compiled.operator is None
+    assert compiled.value == (
+        "(DateAddedTimestamp ge '2025-01-01' and DateAddedTimestamp le '2025-01-31')"
+    )

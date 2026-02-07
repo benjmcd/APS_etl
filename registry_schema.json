@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["version", "queries"],
+  "properties": {
+    "version": { "type": "integer", "enum": [1] },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "libraries": {
+          "type": "object",
+          "properties": {
+            "legacy": { "type": "boolean" },
+            "main": { "type": "boolean" }
+          }
+        },
+        "sort": {
+          "type": "object",
+          "properties": {
+            "field": { "type": "string" },
+            "dir": { "type": "string", "enum": ["ASC", "DESC"] }
+          }
+        },
+        "content": { "type": "boolean" },
+        "safety_buffer_days": { "type": "integer", "minimum": 0 },
+        "wire_format": { "type": ["string", "null"], "enum": ["A", "B", null] }
+      }
+    },
+    "queries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "q"],
+        "properties": {
+          "query_id": { "type": "string" },
+          "name": { "type": "string" },
+          "q": { "type": "string" },
+          "filters_and": { "type": "array" },
+          "filters_or": { "type": "array" },
+          "libraries": { "type": "object" },
+          "sort": { "type": "object" },
+          "content": { "type": "boolean" },
+          "safety_buffer_days": { "type": "integer", "minimum": 0 },
+          "wire_format": { "type": ["string", "null"], "enum": ["A", "B", null] },
+          "enabled": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
