@@ -1,3 +1,4 @@
+import textwrap
 from pathlib import Path
 
 import jsonschema
@@ -77,7 +78,7 @@ version: 1
 queries:
   - name: "sample"
     q: "NuScale"
-{filters_yaml}
+{textwrap.indent(filters_yaml, "    ")}
 """,
         encoding="utf-8",
     )

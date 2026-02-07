@@ -164,7 +164,7 @@ def build_discoveries(
         if not accession:
             continue
         is_package = str(document.get("IsPackage", "No")).lower() in {"yes", "true", "1"}
-        upsert_document(
+        canonical_accession = upsert_document(
             session,
             accession,
             {
@@ -183,7 +183,7 @@ def build_discoveries(
         discoveries.append(
             APSDiscovery(
                 run_id=run_id,
-                accession_number=accession,
+                accession_number=canonical_accession,
                 skip_value=skip_value,
                 page_number=page_number,
                 search_score=result.get("score"),

@@ -54,9 +54,7 @@ def test_query_run_persists_failure(monkeypatch: pytest.MonkeyPatch) -> None:
             )
 
     with Session(engine) as session:
-        run_row = session.scalar(
-            select(APSQueryRun).where(APSQueryRun.query_id == "failure-query")
-        )
+        run_row = session.scalar(select(APSQueryRun).where(APSQueryRun.query_id == "failure-query"))
 
     assert run_row is not None
     assert run_row.status == QueryRunStatus.FAILED

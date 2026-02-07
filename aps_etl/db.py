@@ -20,11 +20,31 @@ def create_session_factory(engine: Engine) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, expire_on_commit=False, future=True)
 
 
-def upsert_document(session: Session, accession_number: str, values: dict[str, Any]) -> None:
+def resolve_accession(session: Session, raw_accession: str) -> tuple[str, str]:
+    """
+    Resolve accession casing against existing records.
+
+    Returns (canonical_accession, accession_lower).
+    """
+
+    normalized = raw_accession.strip().lower()
+    existing_accession = session.scalar(
+        select(APSDocument.accession_number).where(APSDocument.accession_number_lower == normalized)
+    )
+    if existing_accession:
+        canonical_accession = existing_accession
+    else:
+        canonical_accession = raw_accession.strip().upper()
+    accession_lower = canonical_accession.lower()
+    return canonical_accession, accession_lower
+
+
+def upsert_document(session: Session, accession_number: str, values: dict[str, Any]) -> str:
     """Upsert an APS document, preserving existing non-null fields when stubbing."""
 
-    canonical_accession = accession_number.strip().upper()
-    normalized = canonical_accession.lower()
+    if session.bind is None:
+        raise RuntimeError("Session is not bound to an engine.")
+    canonical_accession, normalized = resolve_accession(session, accession_number)
     cleaned_values = {
         key: value
         for key, value in values.items()
@@ -35,16 +55,11 @@ def upsert_document(session: Session, accession_number: str, values: dict[str, A
         "accession_number_lower": normalized,
         **cleaned_values,
     }
-    if session.bind is None:
-        raise RuntimeError("Session is not bound to an engine.")
-
     dialect_name = session.bind.dialect.name
     if dialect_name == "postgresql":
         stmt_pg = pg_insert(APSDocument).values(**payload)
         excluded_is_stub = func.coalesce(stmt_pg.excluded.is_stub, APSDocument.is_stub)
-        excluded_is_package = func.coalesce(
-            stmt_pg.excluded.is_package, APSDocument.is_package
-        )
+        excluded_is_package = func.coalesce(stmt_pg.excluded.is_package, APSDocument.is_package)
         update_values = {
             "accession_number_lower": func.coalesce(
                 stmt_pg.excluded.accession_number_lower, APSDocument.accession_number_lower
@@ -68,9 +83,7 @@ def upsert_document(session: Session, accession_number: str, values: dict[str, A
             "raw_metadata_json": func.coalesce(
                 stmt_pg.excluded.raw_metadata_json, APSDocument.raw_metadata_json
             ),
-            "last_seen_at": func.coalesce(
-                stmt_pg.excluded.last_seen_at, APSDocument.last_seen_at
-            ),
+            "last_seen_at": func.coalesce(stmt_pg.excluded.last_seen_at, APSDocument.last_seen_at),
             "last_modified_at": func.coalesce(
                 stmt_pg.excluded.last_modified_at, APSDocument.last_modified_at
             ),
@@ -78,13 +91,11 @@ def upsert_document(session: Session, accession_number: str, values: dict[str, A
         session.execute(
             stmt_pg.on_conflict_do_update(index_elements=["accession_number"], set_=update_values)
         )
-        return
+        return canonical_accession
 
     stmt_sqlite = sqlite_insert(APSDocument).values(**payload)
     excluded_is_stub = func.coalesce(stmt_sqlite.excluded.is_stub, APSDocument.is_stub)
-    excluded_is_package = func.coalesce(
-        stmt_sqlite.excluded.is_package, APSDocument.is_package
-    )
+    excluded_is_package = func.coalesce(stmt_sqlite.excluded.is_package, APSDocument.is_package)
     update_values = {
         "accession_number_lower": func.coalesce(
             stmt_sqlite.excluded.accession_number_lower, APSDocument.accession_number_lower
@@ -108,9 +119,7 @@ def upsert_document(session: Session, accession_number: str, values: dict[str, A
         "raw_metadata_json": func.coalesce(
             stmt_sqlite.excluded.raw_metadata_json, APSDocument.raw_metadata_json
         ),
-        "last_seen_at": func.coalesce(
-            stmt_sqlite.excluded.last_seen_at, APSDocument.last_seen_at
-        ),
+        "last_seen_at": func.coalesce(stmt_sqlite.excluded.last_seen_at, APSDocument.last_seen_at),
         "last_modified_at": func.coalesce(
             stmt_sqlite.excluded.last_modified_at, APSDocument.last_modified_at
         ),
@@ -118,6 +127,7 @@ def upsert_document(session: Session, accession_number: str, values: dict[str, A
     session.execute(
         stmt_sqlite.on_conflict_do_update(index_elements=["accession_number"], set_=update_values)
     )
+    return canonical_accession
 
 
 def upsert_query(session: Session, query_id: str, values: dict[str, Any]) -> None:
