@@ -2,6 +2,39 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "required": ["version", "queries"],
+  "$defs": {
+    "filter_item": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "field", "ge", "le"],
+          "properties": {
+            "type": { "const": "date_range" },
+            "field": { "type": "string" },
+            "ge": { "type": "string" },
+            "le": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["field", "operator", "value"],
+          "properties": {
+            "type": { "enum": ["text"] },
+            "field": { "type": "string" },
+            "operator": { "type": "string", "enum": ["contains", "equals"] },
+            "value": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
   "properties": {
     "version": { "type": "integer", "enum": [1] },
     "defaults": {
@@ -35,8 +68,8 @@
           "query_id": { "type": "string" },
           "name": { "type": "string" },
           "q": { "type": "string" },
-          "filters_and": { "type": "array" },
-          "filters_or": { "type": "array" },
+          "filters_and": { "type": "array", "items": { "$ref": "#/$defs/filter_item" } },
+          "filters_or": { "type": "array", "items": { "$ref": "#/$defs/filter_item" } },
           "libraries": { "type": "object" },
           "sort": { "type": "object" },
           "content": { "type": "boolean" },

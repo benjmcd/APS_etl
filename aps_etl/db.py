@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session, sessionmaker
@@ -23,26 +23,57 @@ def create_session_factory(engine: Engine) -> sessionmaker[Session]:
 def upsert_document(session: Session, accession_number: str, values: dict[str, Any]) -> None:
     """Upsert an APS document, preserving existing non-null fields when stubbing."""
 
-    normalized = accession_number.lower()
-    payload = {"accession_number": accession_number, "accession_number_lower": normalized, **values}
+    canonical_accession = accession_number.strip().upper()
+    normalized = canonical_accession.lower()
+    cleaned_values = {
+        key: value
+        for key, value in values.items()
+        if key not in {"accession_number", "accession_number_lower"}
+    }
+    payload = {
+        "accession_number": canonical_accession,
+        "accession_number_lower": normalized,
+        **cleaned_values,
+    }
     if session.bind is None:
         raise RuntimeError("Session is not bound to an engine.")
 
     dialect_name = session.bind.dialect.name
     if dialect_name == "postgresql":
         stmt_pg = pg_insert(APSDocument).values(**payload)
+        excluded_is_stub = func.coalesce(stmt_pg.excluded.is_stub, APSDocument.is_stub)
+        excluded_is_package = func.coalesce(
+            stmt_pg.excluded.is_package, APSDocument.is_package
+        )
         update_values = {
-            "url": stmt_pg.excluded.url,
-            "is_package": stmt_pg.excluded.is_package,
-            "is_stub": stmt_pg.excluded.is_stub,
-            "document_date": stmt_pg.excluded.document_date,
-            "date_added_timestamp": stmt_pg.excluded.date_added_timestamp,
-            "document_type": stmt_pg.excluded.document_type,
-            "docket_number": stmt_pg.excluded.docket_number,
-            "title": stmt_pg.excluded.title,
-            "raw_metadata_json": stmt_pg.excluded.raw_metadata_json,
-            "last_seen_at": stmt_pg.excluded.last_seen_at,
-            "last_modified_at": stmt_pg.excluded.last_modified_at,
+            "accession_number_lower": func.coalesce(
+                stmt_pg.excluded.accession_number_lower, APSDocument.accession_number_lower
+            ),
+            "url": func.coalesce(stmt_pg.excluded.url, APSDocument.url),
+            "is_package": APSDocument.is_package | excluded_is_package,
+            "is_stub": APSDocument.is_stub & excluded_is_stub,
+            "document_date": func.coalesce(
+                stmt_pg.excluded.document_date, APSDocument.document_date
+            ),
+            "date_added_timestamp": func.coalesce(
+                stmt_pg.excluded.date_added_timestamp, APSDocument.date_added_timestamp
+            ),
+            "document_type": func.coalesce(
+                stmt_pg.excluded.document_type, APSDocument.document_type
+            ),
+            "docket_number": func.coalesce(
+                stmt_pg.excluded.docket_number, APSDocument.docket_number
+            ),
+            "title": func.coalesce(stmt_pg.excluded.title, APSDocument.title),
+            "raw_metadata_json": func.coalesce(
+                stmt_pg.excluded.raw_metadata_json, APSDocument.raw_metadata_json
+            ),
+            "last_seen_at": func.coalesce(
+                stmt_pg.excluded.last_seen_at, APSDocument.last_seen_at
+            ),
+            "last_modified_at": func.coalesce(
+                stmt_pg.excluded.last_modified_at, APSDocument.last_modified_at
+            ),
         }
         session.execute(
             stmt_pg.on_conflict_do_update(index_elements=["accession_number"], set_=update_values)
@@ -50,18 +81,39 @@ def upsert_document(session: Session, accession_number: str, values: dict[str, A
         return
 
     stmt_sqlite = sqlite_insert(APSDocument).values(**payload)
+    excluded_is_stub = func.coalesce(stmt_sqlite.excluded.is_stub, APSDocument.is_stub)
+    excluded_is_package = func.coalesce(
+        stmt_sqlite.excluded.is_package, APSDocument.is_package
+    )
     update_values = {
-        "url": stmt_sqlite.excluded.url,
-        "is_package": stmt_sqlite.excluded.is_package,
-        "is_stub": stmt_sqlite.excluded.is_stub,
-        "document_date": stmt_sqlite.excluded.document_date,
-        "date_added_timestamp": stmt_sqlite.excluded.date_added_timestamp,
-        "document_type": stmt_sqlite.excluded.document_type,
-        "docket_number": stmt_sqlite.excluded.docket_number,
-        "title": stmt_sqlite.excluded.title,
-        "raw_metadata_json": stmt_sqlite.excluded.raw_metadata_json,
-        "last_seen_at": stmt_sqlite.excluded.last_seen_at,
-        "last_modified_at": stmt_sqlite.excluded.last_modified_at,
+        "accession_number_lower": func.coalesce(
+            stmt_sqlite.excluded.accession_number_lower, APSDocument.accession_number_lower
+        ),
+        "url": func.coalesce(stmt_sqlite.excluded.url, APSDocument.url),
+        "is_package": APSDocument.is_package | excluded_is_package,
+        "is_stub": APSDocument.is_stub & excluded_is_stub,
+        "document_date": func.coalesce(
+            stmt_sqlite.excluded.document_date, APSDocument.document_date
+        ),
+        "date_added_timestamp": func.coalesce(
+            stmt_sqlite.excluded.date_added_timestamp, APSDocument.date_added_timestamp
+        ),
+        "document_type": func.coalesce(
+            stmt_sqlite.excluded.document_type, APSDocument.document_type
+        ),
+        "docket_number": func.coalesce(
+            stmt_sqlite.excluded.docket_number, APSDocument.docket_number
+        ),
+        "title": func.coalesce(stmt_sqlite.excluded.title, APSDocument.title),
+        "raw_metadata_json": func.coalesce(
+            stmt_sqlite.excluded.raw_metadata_json, APSDocument.raw_metadata_json
+        ),
+        "last_seen_at": func.coalesce(
+            stmt_sqlite.excluded.last_seen_at, APSDocument.last_seen_at
+        ),
+        "last_modified_at": func.coalesce(
+            stmt_sqlite.excluded.last_modified_at, APSDocument.last_modified_at
+        ),
     }
     session.execute(
         stmt_sqlite.on_conflict_do_update(index_elements=["accession_number"], set_=update_values)

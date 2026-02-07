@@ -140,9 +140,12 @@ def run_query(
     except Exception as exc:  # pragma: no cover - defensive status setting
         query_run.status = QueryRunStatus.FAILED
         query_run.error_message = str(exc)
+        query_run.ended_at = datetime.utcnow()
+        session.commit()
         raise
     finally:
-        query_run.ended_at = datetime.utcnow()
+        if query_run.ended_at is None:
+            query_run.ended_at = datetime.utcnow()
 
 
 def build_discoveries(
